@@ -1,0 +1,29 @@
+{
+  "name": "auth-cognito",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack build --config ./signup_webpack.config.js && webpack build --config ./signin_webpack.config.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@middy/core": "^2.5.4",
+    "@middy/http-error-handler": "^2.5.4",
+    "@middy/http-event-normalizer": "^2.5.4",
+    "@middy/http-json-body-parser": "^2.5.4",
+    "@middy/validator": "^2.5.5",
+    "amazon-cognito-identity-js-with-node-fetch": "^3.0.14",
+    "aws-sdk": "^2.1070.0",
+    "jsonwebtoken": "^8.5.1",
+    "jwk-to-pem": "^2.0.5",
+    "node-fetch": "^3.2.0",
+    "request": "^2.88.2"
+  },
+  "devDependencies": {
+    "webpack": "^5.68.0",
+    "webpack-cli": "^4.9.2"
+  }
+}
