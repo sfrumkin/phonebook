@@ -6,6 +6,7 @@ const request = require('request');
 const jwkToPem = require('jwk-to-pem');
 const jwt = require('jsonwebtoken');
 import commonMiddleware from '../lib/commonMiddleware';
+import createError from 'http-errors';
 
 
 const poolData = {    
@@ -16,6 +17,8 @@ const pool_region = process.env.REGION;
 
 const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
 
+const dynamodb = new AWS.DynamoDB.DocumentClient();
+
 async function signup(event, context) {
 
   const {email, password, username} = event.body;
@@ -24,10 +27,6 @@ async function signup(event, context) {
   try{
     await RegisterUser(email, password, username);
     console.log("After registering user: " + email);
-    return {
-      statusCode: 200,
-      body: JSON.stringify({})
-    };
   }
   catch (err)
   {
@@ -37,6 +36,26 @@ async function signup(event, context) {
       body: JSON.stringify({})
     };
   }
+
+  const contact = {
+    pk: 'ACCOUNT_'+email,
+    sk: username,
+  };
+ 
+  try{
+    await dynamodb.put({
+      TableName: process.env.CONTACTS_TABLE_NAME,
+      Item: contact,
+    }).promise();
+  } catch(error){
+    console.error(error);
+    throw new createError.InternalServerError(error);
+  } 
+  return {
+    statusCode: 200,
+    body: JSON.stringify(contact)
+  };
+
 }
 
 function RegisterUser(email, password, username){

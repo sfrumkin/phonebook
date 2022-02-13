@@ -85,8 +85,10 @@ resource "aws_lambda_function" "signup" {
       COGNITO_USER_POOL_ID   = aws_cognito_user_pool.phone_book_user_pool.id
       COGNITO_POOL_CLIENT_ID = aws_cognito_user_pool_client.phone_book_user_pool_client.id
       REGION                 = var.aws_region
+      CONTACTS_TABLE_NAME    = aws_dynamodb_table.phoneBookTable.name
     }
   }
+
 }
 
 
@@ -95,6 +97,15 @@ resource "aws_cloudwatch_log_group" "signup" {
 
   retention_in_days = 30
   tags              = local.common_tags
+}
+
+
+resource "aws_iam_role_policy" "lambda_policy" {
+  name = "lambda_policy"
+  role = aws_iam_role.lambda_exec.id
+
+  policy = templatefile("policy.json.tpl", { dynamo_arn = aws_dynamodb_table.phoneBookTable.arn })
+
 }
 
 resource "aws_iam_role" "lambda_exec" {
@@ -113,6 +124,8 @@ resource "aws_iam_role" "lambda_exec" {
     ]
   })
 }
+
+
 
 resource "aws_iam_role_policy_attachment" "lambda_policy" {
   role       = aws_iam_role.lambda_exec.name
@@ -133,7 +146,7 @@ resource "aws_apigatewayv2_authorizer" "lambda" {
   name             = "lambda-authorizer"
 
   jwt_configuration {
-    audience = ["example"]
+    audience = [aws_cognito_user_pool_client.phone_book_user_pool_client.id]
     issuer   = "https://${aws_cognito_user_pool.phone_book_user_pool.endpoint}"
   }
 }
@@ -272,6 +285,179 @@ resource "aws_lambda_permission" "api_gw_signin" {
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.signin.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  source_arn = "${aws_apigatewayv2_api.lambda.execution_arn}/*/*"
+}
+
+########################
+# lambda createContact #
+########################
+
+
+data "archive_file" "lambda_createContact" {
+  type = "zip"
+
+  source_dir  = "${path.module}/build/createContact"
+  output_path = "${path.module}/createContact.zip"
+}
+
+resource "aws_s3_bucket_object" "lambda_createContact" {
+  bucket = aws_s3_bucket.lambda_bucket.id
+
+  key    = "createContact.zip"
+  source = data.archive_file.lambda_createContact.output_path
+
+  etag = filemd5(data.archive_file.lambda_createContact.output_path)
+  tags = local.common_tags
+}
+
+resource "aws_lambda_function" "createContact" {
+  function_name = "createContact"
+
+  s3_bucket = aws_s3_bucket.lambda_bucket.id
+  s3_key    = aws_s3_bucket_object.lambda_createContact.key
+
+  runtime = "nodejs14.x"
+  handler = "createContact.handler"
+
+  source_code_hash = data.archive_file.lambda_createContact.output_base64sha256
+
+  role = aws_iam_role.lambda_exec.arn
+
+  environment {
+    variables = {
+      CONTACTS_TABLE_NAME = aws_dynamodb_table.phoneBookTable.name
+    }
+  }
+
+  tags = local.common_tags
+}
+
+resource "aws_cloudwatch_log_group" "createContact" {
+  name = "/aws/lambda/${aws_lambda_function.createContact.function_name}"
+
+  retention_in_days = 30
+  tags              = local.common_tags
+}
+
+resource "aws_apigatewayv2_integration" "createContact" {
+  api_id = aws_apigatewayv2_api.lambda.id
+
+  integration_uri    = aws_lambda_function.createContact.invoke_arn
+  integration_type   = "AWS_PROXY"
+  integration_method = "POST"
+
+}
+
+resource "aws_apigatewayv2_route" "createContact" {
+  api_id = aws_apigatewayv2_api.lambda.id
+
+  route_key = "POST /contacts"
+  target    = "integrations/${aws_apigatewayv2_integration.createContact.id}"
+
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.lambda.id
+
+}
+
+resource "aws_lambda_permission" "api_gw_createContact" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.createContact.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  source_arn = "${aws_apigatewayv2_api.lambda.execution_arn}/*/*"
+}
+
+
+########################
+# lambda getContact #
+########################
+
+
+data "archive_file" "lambda_getContact" {
+  type = "zip"
+
+  source_dir  = "${path.module}/build/getContact"
+  output_path = "${path.module}/getContact.zip"
+}
+
+resource "aws_s3_bucket_object" "lambda_getContact" {
+  bucket = aws_s3_bucket.lambda_bucket.id
+
+  key    = "getContact.zip"
+  source = data.archive_file.lambda_getContact.output_path
+
+  etag = filemd5(data.archive_file.lambda_getContact.output_path)
+  tags = local.common_tags
+}
+
+resource "aws_lambda_function" "getContact" {
+  function_name = "getContact"
+
+  s3_bucket = aws_s3_bucket.lambda_bucket.id
+  s3_key    = aws_s3_bucket_object.lambda_getContact.key
+
+  runtime = "nodejs14.x"
+  handler = "getContact.handler"
+
+  source_code_hash = data.archive_file.lambda_getContact.output_base64sha256
+
+  role = aws_iam_role.lambda_exec.arn
+
+  environment {
+    variables = {
+      CONTACTS_TABLE_NAME = aws_dynamodb_table.phoneBookTable.name
+    }
+  }
+
+  tags = local.common_tags
+}
+
+resource "aws_cloudwatch_log_group" "getContact" {
+  name = "/aws/lambda/${aws_lambda_function.getContact.function_name}"
+
+  retention_in_days = 30
+  tags              = local.common_tags
+}
+
+resource "aws_apigatewayv2_integration" "getContact" {
+  api_id = aws_apigatewayv2_api.lambda.id
+
+  integration_uri    = aws_lambda_function.getContact.invoke_arn
+  integration_type   = "AWS_PROXY"
+  integration_method = "POST"
+
+}
+
+resource "aws_apigatewayv2_route" "getContact" {
+  api_id = aws_apigatewayv2_api.lambda.id
+
+  route_key = "GET /contacts"
+  target    = "integrations/${aws_apigatewayv2_integration.getContact.id}"
+
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.lambda.id
+
+}
+
+
+resource "aws_apigatewayv2_route" "getContactPath" {
+  api_id = aws_apigatewayv2_api.lambda.id
+
+  route_key = "GET /contacts/{name}"
+  target    = "integrations/${aws_apigatewayv2_integration.getContact.id}"
+
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.lambda.id
+
+}
+
+resource "aws_lambda_permission" "api_gw_getContact" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.getContact.function_name
   principal     = "apigateway.amazonaws.com"
 
   source_arn = "${aws_apigatewayv2_api.lambda.execution_arn}/*/*"
