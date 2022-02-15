@@ -5,7 +5,7 @@ module.exports = {
     output: { 
         // umd allows our code to be run by AWS Lambda 
         libraryTarget: 'umd', 
-        path: path.resolve(__dirname, "deploy/build/deleteContact"), 
+        path: path.resolve(__dirname, "../build/deleteContact"), 
         filename: "deleteContact.js" 
     }
 };

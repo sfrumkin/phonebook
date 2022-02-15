@@ -93,9 +93,13 @@ async function deleteAccount(event, context) {
                   [process.env.CONTACTS_TABLE_NAME]: group,
               },
           };
-
-          await dynamodb.batchWrite(params).promise();
-
+          try{
+            await dynamodb.batchWrite(params).promise();
+          } catch(error){
+            console.error(error);
+            throw new createError.InternalServerError(error);
+          } 
+      
           console.log(
               `Batch ${groupNumber} processed. Left items: ${leftItems}`
           );
@@ -154,26 +158,5 @@ function Delete()
     })
   ));
 }
-// function DeleteUser(username, password) {
-//   var authenticationDetails = new AmazonCognitoIdentity.AuthenticationDetails({
-//       Username : username,
-//       Password : password,
-//   });
-
-//   var userData = {
-//       Username : username,
-//       Pool : userPool
-//   };
-//   var cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
-//   console.log('In DeleteUser: '+ userData.Username + ' ' + userData.Pool)
-//   cognitoUser.deleteUser(function(err, result) {
-//     if (err) {
-//        console.log('Could not delete user');
-//        console.log(err);
-//     } else {
-//        console.log('Deleted user');
-//     }
-//  });
-// }
 
 export const handler = commonMiddleware(deleteAccount);
