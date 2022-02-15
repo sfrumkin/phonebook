@@ -13,6 +13,15 @@
      "dynamodb:UpdateItem"
     ],
     "Resource": "${dynamo_arn}"
+   },
+   {
+    "Effect": "Allow",
+    "Action": [
+     "dynamodb:Query",
+     "dynamodb:Scan",
+     "dynamodb:BatchWriteItem"
+    ],
+    "Resource": "${dynamo_arn}/index/*"
    }
   ]
 }

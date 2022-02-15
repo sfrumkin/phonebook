@@ -19,7 +19,7 @@ resource "aws_dynamodb_table" "phoneBookTable" {
   global_secondary_index {
     name               = "SkIndex"
     hash_key           = "sk"
-    range_key          = "pk"
+    # range_key          = "pk"
     write_capacity     = 10
     read_capacity      = 10
     projection_type    = "INCLUDE"

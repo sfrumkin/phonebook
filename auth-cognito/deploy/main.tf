@@ -188,7 +188,7 @@ resource "aws_apigatewayv2_integration" "signup" {
 resource "aws_apigatewayv2_route" "signup" {
   api_id = aws_apigatewayv2_api.lambda.id
 
-  route_key = "POST /signup"
+  route_key = "POST /accounts"
   target    = "integrations/${aws_apigatewayv2_integration.signup.id}"
 
 }
@@ -623,7 +623,7 @@ resource "aws_apigatewayv2_integration" "deleteAccount" {
 resource "aws_apigatewayv2_route" "deleteAccount" {
   api_id = aws_apigatewayv2_api.lambda.id
 
-  route_key = "DELETE /account"
+  route_key = "DELETE /accounts"
   target    = "integrations/${aws_apigatewayv2_integration.deleteAccount.id}"
 
   authorization_type = "JWT"
