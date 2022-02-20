@@ -52,7 +52,7 @@ async function signup(event, context) {
     throw new createError.InternalServerError(error);
   } 
   return {
-    statusCode: 200,
+    statusCode: 201,
     body: JSON.stringify(contact)
   };
 

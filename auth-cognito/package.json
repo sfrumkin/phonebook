@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack build --config ./deploy/webpack/signup_webpack.config.js && webpack build --config ./deploy/webpack/signin_webpack.config.js && webpack build --config ./deploy/webpack/createContact_webpack.config.js  && webpack build --config ./deploy/webpack/getContact_webpack.config.js  && webpack build --config ./deploy/webpack/deleteContact_webpack.config.js && webpack build --config ./deploy/webpack/deleteAccount_webpack.config.js"
+    "build": "webpack build --config ./deploy/webpack/signup_webpack.config.js && webpack build --config ./deploy/webpack/signin_webpack.config.js && webpack build --config ./deploy/webpack/createContact_webpack.config.js  && webpack build --config ./deploy/webpack/getContact_webpack.config.js  && webpack build --config ./deploy/webpack/deleteContact_webpack.config.js && webpack build --config ./deploy/webpack/deleteAccount_webpack.config.js && webpack build --config ./deploy/webpack/preSignUp_webpack.config.js"
   },
   "author": "",
   "license": "ISC",
@@ -24,6 +24,7 @@
     "request": "^2.88.2"
   },
   "devDependencies": {
+    "@apideck/postman-to-k6": "^1.8.3",
     "webpack": "^5.68.0",
     "webpack-cli": "^4.9.2"
   }

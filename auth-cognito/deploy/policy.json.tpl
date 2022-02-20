@@ -10,7 +10,8 @@
      "dynamodb:BatchWriteItem",
      "dynamodb:PutItem",
      "dynamodb:DeleteItem",
-     "dynamodb:UpdateItem"
+     "dynamodb:UpdateItem",
+     "lambda:invokeFunction"
     ],
     "Resource": "${dynamo_arn}"
    },

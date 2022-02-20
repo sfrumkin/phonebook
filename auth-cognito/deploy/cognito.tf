@@ -4,6 +4,10 @@ resource "aws_cognito_user_pool" "phone_book_user_pool" {
   alias_attributes         = ["email"]
   auto_verified_attributes = ["email"]
 
+  lambda_config {
+    pre_sign_up = aws_lambda_function.preSignUp.arn
+  }
+
   verification_message_template {
     default_email_option  = "CONFIRM_WITH_LINK"
     email_message_by_link = "Please use the following link to confirm: {##Click Here##}"
@@ -34,6 +38,8 @@ resource "aws_cognito_user_pool" "phone_book_user_pool" {
       max_length = 256
     }
   }
+
+
 
 }
 

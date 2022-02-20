@@ -1,10 +1,10 @@
 resource "aws_dynamodb_table" "phoneBookTable" {
-  name           = "PhoneBook"
-  billing_mode   = "PAY_PER_REQUEST"
-  read_capacity  = 20
-  write_capacity = 20
-  hash_key       = "pk"
-  range_key      = "sk"
+  name         = "PhoneBook"
+  billing_mode = "PAY_PER_REQUEST"
+  #read_capacity  = 20
+  #write_capacity = 20
+  hash_key  = "pk"
+  range_key = "sk"
 
   attribute {
     name = "pk"

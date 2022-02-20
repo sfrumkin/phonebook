@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 3.48.0"
+      version = "~> 4.2.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -40,10 +40,13 @@ resource "random_pet" "lambda_bucket_name" {
 resource "aws_s3_bucket" "lambda_bucket" {
   bucket = random_pet.lambda_bucket_name.id
 
-  acl           = "private"
   force_destroy = true
 }
 
+resource "aws_s3_bucket_acl" "lambda_bucket" {
+  bucket = aws_s3_bucket.lambda_bucket.id
+  acl    = "private"
+}
 #####################
 # lambda signup     #
 #####################
@@ -55,7 +58,7 @@ data "archive_file" "lambda_signup" {
   output_path = "${path.module}/signup.zip"
 }
 
-resource "aws_s3_bucket_object" "lambda_signup" {
+resource "aws_s3_object" "lambda_signup" {
   bucket = aws_s3_bucket.lambda_bucket.id
 
   key    = "signup.zip"
@@ -69,7 +72,7 @@ resource "aws_lambda_function" "signup" {
   function_name = "signup"
 
   s3_bucket = aws_s3_bucket.lambda_bucket.id
-  s3_key    = aws_s3_bucket_object.lambda_signup.key
+  s3_key    = aws_s3_object.lambda_signup.key
 
   runtime = "nodejs14.x"
   handler = "signup.handler"
@@ -221,7 +224,7 @@ data "archive_file" "lambda_signin" {
   output_path = "${path.module}/signin.zip"
 }
 
-resource "aws_s3_bucket_object" "lambda_signin" {
+resource "aws_s3_object" "lambda_signin" {
   bucket = aws_s3_bucket.lambda_bucket.id
 
   key    = "signin.zip"
@@ -235,7 +238,7 @@ resource "aws_lambda_function" "signin" {
   function_name = "signin"
 
   s3_bucket = aws_s3_bucket.lambda_bucket.id
-  s3_key    = aws_s3_bucket_object.lambda_signin.key
+  s3_key    = aws_s3_object.lambda_signin.key
 
   runtime = "nodejs14.x"
   handler = "signin.handler"
@@ -302,7 +305,7 @@ data "archive_file" "lambda_createContact" {
   output_path = "${path.module}/createContact.zip"
 }
 
-resource "aws_s3_bucket_object" "lambda_createContact" {
+resource "aws_s3_object" "lambda_createContact" {
   bucket = aws_s3_bucket.lambda_bucket.id
 
   key    = "createContact.zip"
@@ -316,7 +319,7 @@ resource "aws_lambda_function" "createContact" {
   function_name = "createContact"
 
   s3_bucket = aws_s3_bucket.lambda_bucket.id
-  s3_key    = aws_s3_bucket_object.lambda_createContact.key
+  s3_key    = aws_s3_object.lambda_createContact.key
 
   runtime = "nodejs14.x"
   handler = "createContact.handler"
@@ -383,7 +386,7 @@ data "archive_file" "lambda_getContact" {
   output_path = "${path.module}/getContact.zip"
 }
 
-resource "aws_s3_bucket_object" "lambda_getContact" {
+resource "aws_s3_object" "lambda_getContact" {
   bucket = aws_s3_bucket.lambda_bucket.id
 
   key    = "getContact.zip"
@@ -397,7 +400,7 @@ resource "aws_lambda_function" "getContact" {
   function_name = "getContact"
 
   s3_bucket = aws_s3_bucket.lambda_bucket.id
-  s3_key    = aws_s3_bucket_object.lambda_getContact.key
+  s3_key    = aws_s3_object.lambda_getContact.key
 
   runtime = "nodejs14.x"
   handler = "getContact.handler"
@@ -476,7 +479,7 @@ data "archive_file" "lambda_deleteContact" {
   output_path = "${path.module}/deleteContact.zip"
 }
 
-resource "aws_s3_bucket_object" "lambda_deleteContact" {
+resource "aws_s3_object" "lambda_deleteContact" {
   bucket = aws_s3_bucket.lambda_bucket.id
 
   key    = "deleteContact.zip"
@@ -490,7 +493,7 @@ resource "aws_lambda_function" "deleteContact" {
   function_name = "deleteContact"
 
   s3_bucket = aws_s3_bucket.lambda_bucket.id
-  s3_key    = aws_s3_bucket_object.lambda_deleteContact.key
+  s3_key    = aws_s3_object.lambda_deleteContact.key
 
   runtime = "nodejs14.x"
   handler = "deleteContact.handler"
@@ -568,7 +571,7 @@ data "archive_file" "lambda_deleteAccount" {
   output_path = "${path.module}/deleteAccount.zip"
 }
 
-resource "aws_s3_bucket_object" "lambda_deleteAccount" {
+resource "aws_s3_object" "lambda_deleteAccount" {
   bucket = aws_s3_bucket.lambda_bucket.id
 
   key    = "deleteAccount.zip"
@@ -582,7 +585,7 @@ resource "aws_lambda_function" "deleteAccount" {
   function_name = "deleteAccount"
 
   s3_bucket = aws_s3_bucket.lambda_bucket.id
-  s3_key    = aws_s3_bucket_object.lambda_deleteAccount.key
+  s3_key    = aws_s3_object.lambda_deleteAccount.key
 
   runtime = "nodejs14.x"
   handler = "deleteAccount.handler"
@@ -641,4 +644,59 @@ resource "aws_lambda_permission" "api_gw_deleteAccount" {
 
   source_arn = "${aws_apigatewayv2_api.lambda.execution_arn}/*/*"
 }
+
+########################
+# lambda preSignUp #
+########################
+
+
+data "archive_file" "lambda_preSignUp" {
+  type = "zip"
+
+  source_dir  = "${path.module}/build/preSignUp"
+  output_path = "${path.module}/preSignUp.zip"
+}
+
+resource "aws_s3_object" "lambda_preSignUp" {
+  bucket = aws_s3_bucket.lambda_bucket.id
+
+  key    = "preSignUp.zip"
+  source = data.archive_file.lambda_preSignUp.output_path
+
+  etag = filemd5(data.archive_file.lambda_preSignUp.output_path)
+  tags = local.common_tags
+}
+
+resource "aws_lambda_function" "preSignUp" {
+  function_name = "preSignUp"
+
+  s3_bucket = aws_s3_bucket.lambda_bucket.id
+  s3_key    = aws_s3_object.lambda_preSignUp.key
+
+  runtime = "nodejs14.x"
+  handler = "preSignUp.handler"
+  timeout = 20
+
+  source_code_hash = data.archive_file.lambda_preSignUp.output_base64sha256
+
+  role = aws_iam_role.lambda_exec.arn
+
+  tags = local.common_tags
+}
+
+resource "aws_cloudwatch_log_group" "preSignUp" {
+  name = "/aws/lambda/${aws_lambda_function.preSignUp.function_name}"
+
+  retention_in_days = 30
+  tags              = local.common_tags
+}
+
+resource "aws_lambda_permission" "signUp" {
+  statement_id  = "AllowExecutionFromCognito"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.preSignUp.function_name
+  principal     = "cognito-idp.amazonaws.com"
+  source_arn    = aws_cognito_user_pool.phone_book_user_pool.arn
+}
+
 

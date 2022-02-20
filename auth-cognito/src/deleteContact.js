@@ -8,6 +8,22 @@ async function deleteContactByName(name, email)
 {
   let contact;
   console.log('name '+ name+ ' email: '+ email);
+  //first get the contact
+  try{
+    const result = await dynamodb.get({
+      TableName: process.env.CONTACTS_TABLE_NAME,
+      Key: { pk: 'CONTACT_'+name, sk: 'ACCOUNT_' + email },
+    }).promise();
+
+    contact= result.Item;
+    
+  } catch(error){
+    console.error(error);
+    throw new createError.InternalServerError(error);
+  }
+  if(!contact) throw new createError.NotFound("no such item");
+  
+  //then delete the contact
   try{
     const result = await dynamodb.delete({
       TableName: process.env.CONTACTS_TABLE_NAME,
