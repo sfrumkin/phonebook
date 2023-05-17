@@ -43,9 +43,20 @@ resource "aws_s3_bucket" "lambda_bucket" {
   force_destroy = true
 }
 
+resource "aws_s3_bucket_ownership_controls" "lambda_bucket_own" {
+  bucket = aws_s3_bucket.lambda_bucket.id
+
+  rule {
+    object_ownership = "ObjectWriter"
+  }
+}
+
 resource "aws_s3_bucket_acl" "lambda_bucket" {
   bucket = aws_s3_bucket.lambda_bucket.id
   acl    = "private"
+
+   depends_on = [aws_s3_bucket_ownership_controls.lambda_bucket_own]
+
 }
 #####################
 # lambda signup     #
